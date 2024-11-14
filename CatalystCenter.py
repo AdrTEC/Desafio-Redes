@@ -205,9 +205,57 @@ def configDevice(): #para configurar los switches Antony
 def getPhysicalTopology(): # Gabriel
     print("hola")
     
-def assingLocationToDevice(): # Manuel
-    print("hola")
+
+def assingLocationToDevice(device_id, site_id, building_name, floor_name):
+    """
+    Asigna una ubicación (sitio, edificio, piso) a un dispositivo de red.
+
+    :param device_id: El ID del dispositivo al que se le asignará la ubicación.
+    :param site_id: El ID del sitio al que se asignará el dispositivo.
+    :param building_name: El nombre del edificio dentro del sitio.
+    :param floor_name: El nombre del piso dentro del edificio.
+    :return: Respuesta de la API con el resultado de la operación.
+    """
+    # URL para la asignación de ubicación
+    API = f'/dna/intent/api/v1/network-device/{device_id}/location'
+    URL = BASE_URL + API
     
+    # Token de autenticación
+    TOKEN = getToken()
+    
+    # Encabezados para la solicitud
+    HEADERS = {
+        'X-Auth-Token': TOKEN,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
+    
+    # Cuerpo de la solicitud (payload) con la información de la ubicación
+    PAYLOAD = {
+        "location": {
+            "siteId": site_id,  # ID del sitio
+            "building": {
+                "name": building_name  # Nombre del edificio
+            },
+            "floor": {
+                "name": floor_name  # Nombre del piso
+            }
+        }
+    }
+
+    # Realiza la solicitud POST para asignar la ubicación al dispositivo
+    RESPONSE = requests.put(URL, headers=HEADERS, json=PAYLOAD, verify=False)
+    
+    # Verifica el código de estado de la respuesta
+    if RESPONSE.status_code == 200:
+        JSON_RESP = json.loads(RESPONSE.text)
+        print("Ubicación asignada correctamente:", JSON_RESP)
+        return JSON_RESP
+    else:
+        print(f"Error al asignar la ubicación, código de estado: {RESPONSE.status_code}")
+        print(RESPONSE.text)
+        return None
+
 
 
 def getNetworkDevices():
