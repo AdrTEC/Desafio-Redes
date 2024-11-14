@@ -56,15 +56,9 @@ def assignLocationToDevice(device_id, site_id, building_name, floor_name):
     
     # Cuerpo de la solicitud (payload) con la información de la ubicación
     PAYLOAD = {
-        "location": {
-            "siteId": site_id,  # ID del sitio
-            "building": {
-                "name": building_name  # Nombre del edificio
-            },
-            "floor": {
-                "name": floor_name  # Nombre del piso
-            }
-        }
+        "siteId": site_id,
+        "buildingName": building_name,
+        "floorName": floor_name
     }
 
     try:
