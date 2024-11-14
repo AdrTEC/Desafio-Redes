@@ -27,7 +27,7 @@ def getToken():
     JSON_RESP = json.loads(JSON_RESPONSE.text)
     return JSON_RESP['Token']
 
-def assingLocationToDevice(device_id, site_id, building_name, floor_name):
+def assignLocationToDevice(device_id, site_id, building_name, floor_name):
     """
     Asigna una ubicación (sitio, edificio, piso) a un dispositivo de red.
 
@@ -35,36 +35,54 @@ def assingLocationToDevice(device_id, site_id, building_name, floor_name):
     :param site_id: El ID del sitio al que se asignará el dispositivo.
     :param building_name: El nombre del edificio dentro del sitio.
     :param floor_name: El nombre del piso dentro del edificio.
-    :return: Respuesta de la API con el resultado de la operación.
+    :return: Respuesta de la API con el resultado de la operación, o None si ocurre un error.
     """
+    # URL para la asignación de ubicación
     API = f'/dna/intent/api/v1/network-device/{device_id}/location'
     URL = BASE_URL + API
+    
+    # Token de autenticación
     TOKEN = getToken()
+    if not TOKEN:
+        print("Error: No se pudo obtener el token de autenticación.")
+        return None
+    
+    # Encabezados para la solicitud
     HEADERS = {
         'X-Auth-Token': TOKEN,
         'Content-Type': 'application/json',
         'Accept': 'application/json'
     }
-
+    
+    # Cuerpo de la solicitud (payload) con la información de la ubicación
     PAYLOAD = {
         "location": {
-            "siteId": site_id,
+            "siteId": site_id,  # ID del sitio
             "building": {
-                "name": building_name
+                "name": building_name  # Nombre del edificio
             },
             "floor": {
-                "name": floor_name
+                "name": floor_name  # Nombre del piso
             }
         }
     }
 
-    RESPONSE = requests.put(URL, headers=HEADERS, json=PAYLOAD, verify=False)
-
-    if RESPONSE.status_code == 200:
-        print(f"Device {device_id} assigned to location: {building_name}, {floor_name}")
-    else:
-        print(f"Failed to assign device {device_id} to location, status code: {RESPONSE.status_code}")
-        print(RESPONSE.text)
+    try:
+        # Realiza la solicitud PUT para asignar la ubicación al dispositivo
+        RESPONSE = requests.put(URL, headers=HEADERS, json=PAYLOAD, verify=False)
+        
+        # Verifica el código de estado de la respuesta
+        if RESPONSE.status_code == 200:
+            JSON_RESP = RESPONSE.json()
+            print("Ubicación asignada correctamente:", JSON_RESP)
+            return JSON_RESP
+        else:
+            print(f"Error al asignar la ubicación, código de estado: {RESPONSE.status_code}")
+            print(RESPONSE.text)
+            return None
+    except requests.RequestException as e:
+        print(f"Error en la solicitud: {e}")
+        return None
 
 
 #==================================Adrián
@@ -311,7 +329,7 @@ def main():
     building_name="BEAV"
     floor_name="floor2"
 # building name BEAV
-    assingLocationToDevice(device_id,site_id,building_name, floor_name)
+    assignLocationToDevice(device_id,site_id,building_name, floor_name)
     # Crear un dispositivo router y luego consultar su estado
     #execution_url = createDevice()
     #if execution_url:
