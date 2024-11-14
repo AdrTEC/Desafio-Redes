@@ -202,8 +202,25 @@ def configDevice(): #para configurar los switches Antony
     print("hola")
 
 
-def getPhysicalTopology(): # Gabriel
-    print("hola")
+def getPhysicalTopology(): 
+    API = "/dna/intent/api/v1/topology/physical-topology"
+    URL = BASE_URL + API
+    TOKEN = getToken()
+    HEADERS = {
+        'X-Auth-Token': TOKEN,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
+    RESPONSE = requests.get(URL, headers=HEADERS, verify=False)
+    
+    if RESPONSE.status_code == 200:
+        JSON_RESP = json.loads(RESPONSE.text)
+        pprint(JSON_RESP)  # Imprime el resultado en formato legible
+        return JSON_RESP
+    else:
+        print(f"Failed to retrieve network devices, status code: {RESPONSE.status_code}")
+        print(RESPONSE.text)
+        return None
     
 
 def assingLocationToDevice(device_id, site_id, building_name, floor_name):
@@ -287,4 +304,4 @@ def getNetworkDevices():
 execution_url = createRouterDevice()
 pprint(execution_url)
 getDeviceExecutionStatus(execution_url)
-
+getPhysicalTopology()
