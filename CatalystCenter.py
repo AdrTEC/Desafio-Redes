@@ -3,7 +3,6 @@ import json
 from pprint import pprint
 
 # Disable SSL/TLS warnings
-
 requests.packages.urllib3.disable_warnings()
 
 # Constants variables
@@ -121,5 +120,108 @@ def getSiteExecution():
     JSON_RESP = json.loads(RESPONSE.text)
     return JSON_RESP
 
-pprint(getSite(), indent=4)
+def createRouterDevice():
+    API = '/dna/intent/api/v1/network-device'
+    URL = BASE_URL + API
+    TOKEN = getToken()
+    HEADERS = {
+        'X-Auth-Token': TOKEN,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
+    
+    PAYLOAD = {
+    "cliTransport": "ssh",
+    "computeDevice": False,
+    "enablePassword": "12345678",
+    "extendedDiscoveryInfo": "DISCOVER_WITH_CANNED_DATA",
+    "httpPassword": "12345678",
+    "httpPort": "8080",
+    "httpSecure": True,
+    "httpUserName": "test",
+    "ipAddress": [ "10.10.20.189" ],
+    "merakiOrgId": [ "your-meraki-org-id" ],
+    "netconfPort": "830",
+    "password": "12345678",
+    "serialNumber": "CML12345ROUT",
+    "snmpAuthPassphrase": "auth_passphrase",
+    "snmpAuthProtocol": "sha",
+    "snmpMode": "authPriv",
+    "snmpPrivPassphrase": "priv_passphrase",
+    "snmpPrivProtocol": "AES128",
+    "snmpROCommunity": "public",
+    "snmpRWCommunity": "private",
+    "snmpRetry": 3,
+    "snmpTimeout": 5,
+    "snmpUserName": "snmp_user",
+    "snmpVersion": "v3",
+    "type": "NETWORK_DEVICE",
+    "updateMgmtIPaddressList": [
+    {
+        "existMgmtIpAddress": "10.10.20.178",
+        "newMgmtIpAddress": "10.10.20.179"
+    }
+    ],
+    "userName": "test"
+    }
+
+
+    RESPONSE = requests.post(URL, headers=HEADERS, json=PAYLOAD, verify=False)
+    if RESPONSE.status_code == 202:
+        JSON_RESP = json.loads(RESPONSE.text)
+        print("Device creation initiated:", JSON_RESP)
+        return JSON_RESP['response']["url"]  # Obtiene la URL de ejecución
+    else:
+        print(f"Failed to create device, status code: {RESPONSE.status_code}")
+        print(RESPONSE.text)
+        return None
+
+def getDeviceExecutionStatus(execution_url):
+    URL = BASE_URL + execution_url
+    TOKEN = getToken()
+    HEADERS = {
+        'X-Auth-Token': TOKEN,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
+
+    RESPONSE = requests.get(URL, headers=HEADERS, verify=False)
+    if RESPONSE.status_code == 200:
+        JSON_RESP = RESPONSE.json()
+        pprint(JSON_RESP)
+        return JSON_RESP
+    else:
+        print(f"Failed to retrieve execution status, status code: {RESPONSE.status_code}")
+        print(RESPONSE.text)
+        return None
+
+
+def getNetworkDevices():
+    API = '/dna/intent/api/v1/network-device'
+    URL = BASE_URL + API
+    TOKEN = getToken()
+    HEADERS = {
+        'X-Auth-Token': TOKEN,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
+
+    RESPONSE = requests.get(URL, headers=HEADERS, verify=False)
+    
+    if RESPONSE.status_code == 200:
+        JSON_RESP = json.loads(RESPONSE.text)
+        pprint(JSON_RESP)  # Imprime el resultado en formato legible
+        return JSON_RESP
+    else:
+        print(f"Failed to retrieve network devices, status code: {RESPONSE.status_code}")
+        print(RESPONSE.text)
+        return None
+
+# Llama a la función para obtener la lista de dispositivos de red
+#getNetworkDevices()
+
+# Llama a la función para probar la creación de un dispositivo
+execution_url = createRouterDevice()
+pprint(execution_url)
+getDeviceExecutionStatus(execution_url)
 
