@@ -36,34 +36,6 @@ def getSite():
     JSON_RESP = json.loads(RESPONSE.text)
     return JSON_RESP
 
-def getSiteCount():
-    API = '/dna/intent/api/v1/site/count'
-    URL = BASE_URL + API
-    TOKEN = getToken()
-    HEADERS = {
-        'X-Auth-Token': TOKEN,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-    }
-
-    RESPONSE = requests.get(URL, headers=HEADERS, verify=False)
-    JSON_RESP = json.loads(RESPONSE.text)
-    return JSON_RESP
-
-def getSiteHealth():
-    API = '/dna/intent/api/v1/site/site-health'
-    URL = BASE_URL + API
-    TOKEN = getToken()
-    HEADERS = {
-        'X-Auth-Token': TOKEN,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-    }
-
-    RESPONSE = requests.get(URL, headers=HEADERS, verify=False)
-    JSON_RESP = json.loads(RESPONSE.text)
-    return JSON_RESP
-
 def createSite():
     API = '/dna/intent/api/v1/site'
     URL = BASE_URL + API
@@ -119,6 +91,36 @@ def getSiteExecution():
     RESPONSE = requests.get(URL, headers=HEADERS, verify=False)
     JSON_RESP = json.loads(RESPONSE.text)
     return JSON_RESP
+
+
+def getSiteCount():
+    API = '/dna/intent/api/v1/site/count'
+    URL = BASE_URL + API
+    TOKEN = getToken()
+    HEADERS = {
+        'X-Auth-Token': TOKEN,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
+
+    RESPONSE = requests.get(URL, headers=HEADERS, verify=False)
+    JSON_RESP = json.loads(RESPONSE.text)
+    return JSON_RESP
+
+def getSiteHealth():
+    API = '/dna/intent/api/v1/site/site-health'
+    URL = BASE_URL + API
+    TOKEN = getToken()
+    HEADERS = {
+        'X-Auth-Token': TOKEN,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
+
+    RESPONSE = requests.get(URL, headers=HEADERS, verify=False)
+    JSON_RESP = json.loads(RESPONSE.text)
+    return JSON_RESP
+
 
 def createRouterDevice():
     API = '/dna/intent/api/v1/network-device'
@@ -196,7 +198,20 @@ def getDeviceExecutionStatus(execution_url):
         return None
 
 
+def configDevice(): #para configurar los switches Antony
+    print("hola")
+
+
+def getPhysicalTopology(): # Gabriel
+    print("hola")
+    
+def assingLocationToDevice(): # Manuel
+    print("hola")
+    
+
+
 def getNetworkDevices():
+    
     API = '/dna/intent/api/v1/network-device'
     URL = BASE_URL + API
     TOKEN = getToken()
