@@ -1,3 +1,4 @@
+from flask import Flask, jsonify, request
 import requests
 import json
 from pprint import pprint
@@ -10,69 +11,25 @@ BASE_URL = "https://10.10.20.85"
 USERNAME = "admin"
 PASSWORD = "Cisco1234!"
 
-#===================================Manuel
+app = Flask(__name__)
+
+#=============================== Token Management
 
 def getToken():
-    """
-    Obtiene el token de autenticación para hacer solicitudes a la API de Cisco DNA Center.
-    """
     API = '/dna/system/api/v1/auth/token'
     URL = BASE_URL + API
     HEADERS = {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
     }
-
     JSON_RESPONSE = requests.post(URL, auth=(USERNAME, PASSWORD), headers=HEADERS, verify=False)
     JSON_RESP = json.loads(JSON_RESPONSE.text)
     return JSON_RESP['Token']
 
-def assingLocationToDevice(device_id, site_id, building_name, floor_name):
-    """
-    Asigna una ubicación (sitio, edificio, piso) a un dispositivo de red.
+#=============================== Endpoint Functions
 
-    :param device_id: El ID del dispositivo al que se le asignará la ubicación.
-    :param site_id: El ID del sitio al que se asignará el dispositivo.
-    :param building_name: El nombre del edificio dentro del sitio.
-    :param floor_name: El nombre del piso dentro del edificio.
-    :return: Respuesta de la API con el resultado de la operación.
-    """
-    API = f'/dna/intent/api/v1/network-device/{device_id}/location'
-    URL = BASE_URL + API
-    TOKEN = getToken()
-    HEADERS = {
-        'X-Auth-Token': TOKEN,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-    }
-
-    PAYLOAD = {
-        "location": {
-            "siteId": site_id,
-            "building": {
-                "name": building_name
-            },
-            "floor": {
-                "name": floor_name
-            }
-        }
-    }
-
-    RESPONSE = requests.put(URL, headers=HEADERS, json=PAYLOAD, verify=False)
-
-    if RESPONSE.status_code == 200:
-        print(f"Device {device_id} assigned to location: {building_name}, {floor_name}")
-    else:
-        print(f"Failed to assign device {device_id} to location, status code: {RESPONSE.status_code}")
-        print(RESPONSE.text)
-
-
-#==================================Adrián
-
+@app.route('/sites', methods=['GET'])
 def getSite():
-    """
-    Obtiene información sobre los sitios registrados en Cisco DNA Center.
-    """
     API = '/dna/intent/api/v1/site'
     URL = BASE_URL + API
     TOKEN = getToken()
@@ -81,10 +38,12 @@ def getSite():
         'Content-Type': 'application/json',
         'Accept': 'application/json'
     }
-
     RESPONSE = requests.get(URL, headers=HEADERS, verify=False)
     JSON_RESP = json.loads(RESPONSE.text)
-    return JSON_RESP
+    return jsonify(JSON_RESP)
+
+
+
 
 def createSite():
     """
@@ -102,7 +61,7 @@ def createSite():
         "type": "area",
         "site": {
             "area": {
-                "name": "MARTE",
+                "name": "TEST CREACION",
                 "parentName": "Global"
             },
             "building": {
@@ -128,47 +87,51 @@ def createSite():
     RESPONSE = requests.post(URL, headers=HEADERS, json=PAYLOAD, verify=False)
     print(RESPONSE.status_code)
     JSON_RESP = json.loads(RESPONSE.text)
-    return JSON_RESP['executionStatusUrl']
+    return JSON_RESP
 
-def confirmSiteCreation():
+@app.route('/createSite', methods=['GET'])
+def createSiteWrapper():
     """
-    Obtiene el estado de ejecución de la creación del sitio.
+    Endpoint de Flask para crear un nuevo sitio en Cisco DNA Center.
+    Llama a la función createSite y devuelve el resultado.
     """
-    API = createSite()
-    URL = BASE_URL + API
-    print(URL)
+    # Llama a la función original que realiza el POST y crea el sitio
+    response = createSite()
+
+    # Devuelve la URL de estado de ejecución obtenida de la respuesta en JSON
+    return response
+
+@app.route('/confirmSiteCreation/<path:execution_url>', methods=['GET'])
+def confirmSiteCreation(execution_url):
+    URL = BASE_URL + execution_url
     TOKEN = getToken()
     HEADERS = {
         'X-Auth-Token': TOKEN,
         'Content-Type': 'application/json',
         'Accept': 'application/json'
     }
-
     RESPONSE = requests.get(URL, headers=HEADERS, verify=False)
     JSON_RESP = json.loads(RESPONSE.text)
-    return JSON_RESP
+    return jsonify(JSON_RESP)
 
 
 
 
 
 
-#===============================Antony
 
+
+
+@app.route('/createDevice', methods=['POST'])
 def createDevice():
-    """
-    Crea un dispositivo de red tipo router en Cisco DNA Center.
-    """
     API = '/dna/intent/api/v1/network-device'
     URL = BASE_URL + API
     TOKEN = getToken()
     HEADERS = {
         'X-Auth-Token': TOKEN,
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
-    }
-
-    PAYLOAD = {
+        'Accept': 'application/json'}
+    PAYLOAD = request.json or {
         "cliTransport": "ssh",
         "computeDevice": False,
         "enablePassword": "12345678",
@@ -202,21 +165,12 @@ def createDevice():
         ],
         "userName": "test"
     }
-
     RESPONSE = requests.post(URL, headers=HEADERS, json=PAYLOAD, verify=False)
-    if RESPONSE.status_code == 202:
-        JSON_RESP = json.loads(RESPONSE.text)
-        print("Device creation initiated:", JSON_RESP)
-        return JSON_RESP['response']["url"]  # Obtiene la URL de ejecución
-    else:
-        print(f"Failed to create device, status code: {RESPONSE.status_code}")
-        print(RESPONSE.text)
-        return None
+    JSON_RESP = json.loads(RESPONSE.text)
+    return jsonify(JSON_RESP)
 
+@app.route('/confirmDeviceCreation/<path:execution_url>', methods=['GET'])
 def confirmDeviceCreation(execution_url):
-    """
-    Obtiene el estado de ejecución de la creación del dispositivo.
-    """
     URL = BASE_URL + execution_url
     TOKEN = getToken()
     HEADERS = {
@@ -224,25 +178,12 @@ def confirmDeviceCreation(execution_url):
         'Content-Type': 'application/json',
         'Accept': 'application/json'
     }
-
     RESPONSE = requests.get(URL, headers=HEADERS, verify=False)
-    if RESPONSE.status_code == 200:
-        JSON_RESP = RESPONSE.json()
-        pprint(JSON_RESP)
-        return JSON_RESP
-    else:
-        print(f"Failed to retrieve execution status, status code: {RESPONSE.status_code}")
-        print(RESPONSE.text)
-        return None
+    JSON_RESP = json.loads(RESPONSE.text)
+    return jsonify(JSON_RESP)
 
-
-
-
-#=============================== Gabriel
+@app.route('/getPhysicalTopology', methods=['GET'])
 def getPhysicalTopology():
-    """
-    Obtiene la topología física de la red.
-    """
     API = "/dna/intent/api/v1/topology/physical-topology"
     URL = BASE_URL + API
     TOKEN = getToken()
@@ -252,20 +193,11 @@ def getPhysicalTopology():
         'Accept': 'application/json'
     }
     RESPONSE = requests.get(URL, headers=HEADERS, verify=False)
+    JSON_RESP = json.loads(RESPONSE.text)
+    return jsonify(JSON_RESP)
 
-    if RESPONSE.status_code == 200:
-        JSON_RESP = json.loads(RESPONSE.text)
-        pprint(JSON_RESP)  # Imprime el resultado en formato legible
-        return JSON_RESP
-    else:
-        print(f"Failed to retrieve network devices, status code: {RESPONSE.status_code}")
-        print(RESPONSE.text)
-        return None
-
+@app.route('/getSiteCount', methods=['GET'])
 def getSiteCount():
-    """
-    Obtiene el número de sitios registrados en Cisco DNA Center.
-    """
     API = '/dna/intent/api/v1/site/count'
     URL = BASE_URL + API
     TOKEN = getToken()
@@ -274,15 +206,12 @@ def getSiteCount():
         'Content-Type': 'application/json',
         'Accept': 'application/json'
     }
-
     RESPONSE = requests.get(URL, headers=HEADERS, verify=False)
     JSON_RESP = json.loads(RESPONSE.text)
-    return JSON_RESP
+    return jsonify(JSON_RESP)
 
+@app.route('/getSiteHealth', methods=['GET'])
 def getSiteHealth():
-    """
-    Obtiene la salud de los sitios registrados en Cisco DNA Center.
-    """
     API = '/dna/intent/api/v1/site/site-health'
     URL = BASE_URL + API
     TOKEN = getToken()
@@ -291,32 +220,35 @@ def getSiteHealth():
         'Content-Type': 'application/json',
         'Accept': 'application/json'
     }
-
     RESPONSE = requests.get(URL, headers=HEADERS, verify=False)
     JSON_RESP = json.loads(RESPONSE.text)
-    return JSON_RESP
+    return jsonify(JSON_RESP)
 
+@app.route('/assingLocationToDevice/<device_id>/<site_id>/<building_name>/<floor_name>', methods=['PUT'])
+def assingLocationToDevice(device_id, site_id, building_name, floor_name):
+    API = f'/dna/intent/api/v1/network-device/{device_id}/location'
+    URL = BASE_URL + API
+    TOKEN = getToken()
+    HEADERS = {
+        'X-Auth-Token': TOKEN,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
+    PAYLOAD = {
+        "location": {
+            "siteId": site_id,
+            "building": {
+                "name": building_name
+            },
+            "floor": {
+                "name": floor_name
+            }
+        }
+    }
+    RESPONSE = requests.put(URL, headers=HEADERS, json=PAYLOAD, verify=False)
+    JSON_RESP = json.loads(RESPONSE.text)
+    return jsonify(JSON_RESP)
 
-
-def main():
-    # Un ejemplo de cómo llamar a las funciones
-    #pprint(getSite())  # Imprime la lista de sitios
-    #pprint(getSiteCount())  # Muestra el número de sitios
-    #pprint(getSiteHealth())  # Muestra la salud de los sitios
-    #pprint(getPhysicalTopology())  # Muestra la topología física de la red
-
-
-    site_id= " a7d3d4a4-3dfa-4bd5-918b-2b562585e2f5"
-    device_id="ab690aa1-a4c4-478b-9406-72ef0200517c"
-    building_name="BEAV"
-    floor_name="floor2"
-# building name BEAV
-    assingLocationToDevice(device_id,site_id,building_name, floor_name)
-    # Crear un dispositivo router y luego consultar su estado
-    #execution_url = createDevice()
-    #if execution_url:
-    #    pprint(confirmDeviceCreation(execution_url))
-
-
-if __name__ == "__main__":
-    main()
+#=============================== Run the Flask app
+if __name__ == '__main__':
+    app.run(debug=True)
