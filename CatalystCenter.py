@@ -115,11 +115,61 @@ def confirmSiteCreation(execution_url):
     return jsonify(JSON_RESP)
 
 
+def getUsers():
+    API = '/dna/system/api/v1/user'
+    URL = BASE_URL + API
+    TOKEN = getToken()
+    HEADERS = {
+        'X-Auth-Token': TOKEN,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
 
+    RESPONSE = requests.get(URL, headers=HEADERS, verify=False)
+    JSON_RESP = json.loads(RESPONSE.text)
+    return JSON_RESP
 
+def updateUser():
+    API = '/dna/system/api/v1/user'
+    URL = BASE_URL + API
+    TOKEN = getToken()
+    HEADERS = {
+        'X-Auth-Token': TOKEN,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
+    PAYLOAD = {
+        "firstName": "Anthony",
+        "lastName": "Montero",
+        "authSource": "internal",
+        "passphraseUpdateTime": "1731368069345",
+        "passphrase": None,
+        "oldPassphrase": None,
+        "roleList": [
+            "6696f01aa04cae65c3c37b02"
+        ],
+        "userId": "6697740ae8e79474f717ab5a",
+        "email": "",
+        "username": "devnetuser"   
+    }
 
+    RESPONSE = requests.put(URL, headers=HEADERS, json=PAYLOAD, verify=False)
+    JSON_RESP = json.loads(RESPONSE.text)
+    return JSON_RESP['executionStatusUrl']
 
+def getDevices():
+    API = '/dna/intent/api/v1/network-device'
+    URL = BASE_URL + API
+    TOKEN = getToken()
+    HEADERS = {
+        'X-Auth-Token': TOKEN,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
 
+    RESPONSE = requests.get(URL, headers=HEADERS, verify=False)
+    JSON_RESP = json.loads(RESPONSE.text)
+    return JSON_RESP
 
 
 @app.route('/createDevice', methods=['POST'])
